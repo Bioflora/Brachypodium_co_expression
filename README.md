@@ -37,11 +37,14 @@ Rscript -e "rmarkdown::render('03b_WGCNA_soft_power_W_script.Rmd',output_file='0
 ```
 Rscript -e "rmarkdown::render('04a_WGCNA_net_D_unsigned_script.Rmd',output_file='04a_WGCNA_net_D_unsigned_script.html')" &> 04a_WGCNA_net_D_unsigned_script.out &
 Rscript -e "rmarkdown::render('04b_WGCNA_net_W_unsigned_script.Rmd',output_file='04b_WGCNA_net_W_unsigned_script.html')" &> 04b_WGCNA_net_W_unsigned_script.out &
+```
 
 # 4) Run WGCNA to compute the connectivities
 
+```
 Rscript -e "rmarkdown::render('05a_WGCNA_kdiff_mean_D_script.Rmd',output_file='05a_WGCNA_kdiff_mean_D_script.html')" &> 05a_WGCNA_kdiff_mean_D_script.out &
 Rscript -e "rmarkdown::render('05b_WGCNA_kdiff_mean_W_script.Rmd',output_file='05b_WGCNA_kdiff_mean_W_script.html')" &> 05b_WGCNA_kdiff_mean_W_script.out &
+```
 
 # 5) Compute hub nodes (threshold 0.90), MM and others
 
@@ -77,7 +80,6 @@ All modules are preserved
 # 9) Differential expression genes
 
 This analysis was compted using Sleuth package. See script 01_Sleuth_script.Rmd
-
 
 
 
