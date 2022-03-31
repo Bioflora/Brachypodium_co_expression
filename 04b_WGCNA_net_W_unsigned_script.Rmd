@@ -1,0 +1,136 @@
+---
+title: "Unsigned net for W data set"
+author: "Ruben Sancho, Bruno Contreras Moreira"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r knitr setup, include=FALSE,  eval=TRUE, echo=FALSE, warning=FALSE}
+library(knitr)
+knitr::opts_chunk$set(eval=TRUE, cache=FALSE, message=FALSE, warning=FALSE,
+                      comment = "")
+```
+
+
+```{r net}
+
+# Display the current working directory
+getwd();
+workingDir = ".";
+setwd(workingDir);
+
+library(WGCNA);
+library(cluster);
+options(stringsAsFactors = FALSE);
+allowWGCNAThreads();
+
+load(file = "datExpr.RData");
+
+genes = colnames(datExprW)
+
+netW = blockwiseModules(datExprW,
+                        power = 6,
+                        minModuleSize = 30,
+                        TOMType = "unsigned",
+                        networkType = "unsigned",
+                        maxBlockSize = "16386",
+                        mergeCutHeight = 0.3,
+                        numericLabels = TRUE,
+                        pamStage = TRUE, pamRespectsDendro = TRUE,
+                        deepSplit = 2, verbose = 3)
+
+# Convert labels to colors for plotting
+# label 0 is reserved for genes outside of all modules
+table(netW$colors)
+mergedColors = labels2colors(netW$colors)
+table(labels2colors(netW$colors))
+
+moduleLabels_W = netW$colors
+moduleColors_W = labels2colors(netW$colors)
+MEs_W = netW$MEs;
+geneTree_W = netW$dendrograms[[1]];
+
+save(netW, MEs_W, moduleLabels_W, moduleColors_W, geneTree_W,
+     file = "net_W_unsigned.RData")
+
+# open a graphics window
+sizeGrWindow(12, 9)
+
+# Plot the dendrogram and the module colors underneath of W
+
+png("net_W_unsigned.png",
+    width = 16800, height = 13600, units = "px", pointsize = 144, bg = "white")
+plotDendroAndColors(netW$dendrograms[[1]], mergedColors[netW$blockGenes[[1]]],
+                    "Module colors",
+                    main = paste("modules(W)=",max(netW$colors)),
+                    dendroLabels = F, hang = 0.03,
+                    addGuide = F, guideHang = 0.05)
+dev.off()
+
+```
+
+```{r eigengenes}
+
+# It is often interesting to study the relationships among the found modules.
+# One can use the eigengenes as representative profiles and quantify module similarity by eigengene correlation.
+
+# Calculate eigengenes
+
+MEList_W = moduleEigengenes(datExprW, moduleColors_W, excludeGrey = TRUE, softPower = 6)
+MEs_W_plot = MEList_W$eigengenes
+
+# Calculate dissimilarity of module eigengenes
+
+MEDiss_W = 1-cor(MEs_W_plot);
+
+# Cluster module eigengenes
+
+METree_W = hclust(as.dist(MEDiss_W), method = "average");
+
+# Plot the result
+
+sizeGrWindow(12,12);
+png("net_W_eigengenes_unsigned.png",
+    width = 1600, height = 1200, units = "px", pointsize = 32, bg = "white");
+par(cex = 1.0)
+plot(METree_W, main = "Clustering of module eigengenes W",
+     xlab = "", sub = "")
+dev.off()
+```
+
+```{r export}
+
+# export lists of genes within each module of W
+
+for(color in 0:max(netW$colors)){
+
+  # save transcript ids in this module
+  write.table( genes[ netW$colors == color ],
+              file=(paste("./modules_W/",
+                          color,".txt",sep="")),sep="\t",row.names=F,col.names=F,quote=F )
+
+  # save annotations of transcripts in this module
+  #write.table( nrow(subset(genes_annot, transcriptName %in% genes[ net$colors == color ] )),
+  #             file=(paste("WGCNA/modules/",treat1,color,"_annot.tsv",sep="")),
+  #             sep="\t",row.names=F)
+}
+```
+
+
+```{r adjacency and connectivity}
+
+adj_W = adjacency(datExprW,
+                  type = "unsigned",
+                  power = 6)
+
+save(adj_W, file = "adj_W.RData")
+
+load(file="adj_W.RData")
+
+# Calculates intramodular connectivity, i.e., connectivity of nodes to other nodes within the same module.
+
+Alldegrees_W = intramodularConnectivity(adj_W, moduleColors_W)
+
+write.csv(Alldegrees_W, file = "Alldegrees_W.csv")
+```

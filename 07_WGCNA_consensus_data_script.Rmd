@@ -1,0 +1,163 @@
+---
+title: "Consensus data set"
+author: "Ruben Sancho, Bruno Contreras Moreira"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r knitr setup, include=FALSE,  eval=TRUE, echo=FALSE, warning=FALSE}
+library(knitr)
+knitr::opts_chunk$set(eval=TRUE, cache=FALSE, message=FALSE, warning=FALSE,
+                      comment = "")
+```
+
+## see https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/Consensus-DataInput.R
+
+```{r rawdata}
+
+# Display the current working directory
+getwd();
+
+# If necessary, change the path below to the directory where the data files are stored.
+
+workingDir = ".";
+setwd(workingDir);
+
+# Load the WGCNA package
+library(WGCNA);
+options(stringsAsFactors = FALSE);
+allowWGCNAThreads();
+
+# Dry (D)
+
+dis_D_data = read.csv("kallisto_table_batch_date_review_D.csv")
+dim(dis_D_data)
+names(dis_D_data)
+
+# WATER (W)
+dis_W_data = read.csv("kallisto_table_batch_date_review_W.csv")
+dim(dis_W_data)
+names(dis_W_data)
+
+```
+
+```{r sets}
+
+# We work with two sets:
+nSets = 2;
+
+# For easier labeling of plots, create a vector holding descriptive names of the two sets.
+setLabels = c("Drought TPMs", "Water TPMs")
+shortLabels = c("Drought", "Water")
+
+# Form multi-set expression data
+multiExpr = vector(mode = "list", length = nSets)
+
+# D
+multiExpr[[1]] = list(data = as.data.frame(t(dis_D_data[, -c(1)])));
+names(multiExpr[[1]]$data) = dis_D_data$target_id;
+rownames(multiExpr[[1]]$data) = names(dis_D_data)[-c(1)];
+
+# W
+multiExpr[[2]] = list(data = as.data.frame(t(dis_W_data[, -c(1)])));
+names(multiExpr[[2]]$data) = dis_W_data$target_id;
+rownames(multiExpr[[2]]$data) = names(dis_W_data)[-c(1)];
+
+# Check that the data has the correct format for many functions operating on multiple sets:
+exprSize = checkSets(multiExpr)
+
+```
+
+```{r goodgenes}
+
+# Check that all genes and samples have sufficiently low numbers of missing values.
+gsg = goodSamplesGenesMS(multiExpr, verbose = 3);
+gsg$allOK
+
+if (!gsg$allOK)
+{
+  # Print information about the removed genes:
+  if (sum(!gsg$goodGenes) > 0)
+    printFlush(paste("Removing genes:", paste(names(multiExpr[[1]]$data)[!gsg$goodGenes], 
+                                              collapse = ", ")))
+  for (set in 1:exprSize$nSets)
+  {
+    if (sum(!gsg$goodSamples[[set]]))
+      printFlush(paste("In set", setLabels[set], "removing samples",
+                       paste(rownames(multiExpr[[set]]$data)[!gsg$goodSamples[[set]]], collapse = ", ")))
+    # Remove the offending genes and samples
+    multiExpr[[set]]$data = multiExpr[[set]]$data[gsg$goodSamples[[set]], gsg$goodGenes];
+  }
+  # Update exprSize
+  exprSize = checkSets(multiExpr)
+}
+```
+
+```{r sampletree}
+
+sampleTrees = list()
+for (set in 1:nSets)
+{
+  sampleTrees[[set]] = hclust(dist(multiExpr[[set]]$data), method = "average")
+}
+
+png("SampleClustering.png", width = 4200, height = 3600, units = "px", pointsize = 22, bg = "white");
+par(mfrow=c(2,1))
+par(mar = c(6, 6, 6, 6))
+
+for (set in 1:nSets)
+  plot(sampleTrees[[set]], main = paste("Sample clustering on all genes in", setLabels[set]),
+       sub="", xlab="", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2);
+dev.off();
+
+```
+
+```{r cutbase}
+
+# Choose the "base" cut height for the drought data set
+baseHeight = 300000
+
+# Adjust the cut height for the  data set for the number of samples
+cutHeights = c(300000, 300000*exprSize$nSamples[2]/exprSize$nSamples[1]);
+
+# Re-plot the dendrograms including the cut lines
+png("SampleClustering.png", width = 4200, height = 3600, units = "px", pointsize = 22, bg = "white");
+par(mfrow=c(2,1))
+par(mar = c(6, 6, 6, 6))
+
+for (set in 1:nSets)
+{
+  plot(sampleTrees[[set]], main = paste("Sample clustering on all genes in", setLabels[set]),
+       sub="", xlab="", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2);
+       abline(h=cutHeights[set], col = "red");
+}
+dev.off();
+```
+
+```{r clusters}
+
+for (set in 1:nSets)
+{
+
+  # Find clusters cut by the line
+  labels = cutreeStatic(sampleTrees[[set]], cutHeight = cutHeights[set])
+
+  # Keep the largest one (labeled by the number 1)
+  keep = (labels==1)
+  multiExpr[[set]]$data = multiExpr[[set]]$data[keep, ]
+}
+collectGarbage();
+
+# Check the size of the leftover data
+exprSize = checkSets(multiExpr)
+exprSize
+
+# Define data set dimensions
+nGenes = exprSize$nGenes;
+nSamples = exprSize$nSamples;
+
+save(multiExpr, nGenes, nSamples, setLabels, shortLabels, exprSize, 
+     file = "Consensus-dataInput.RData");
+
+```
