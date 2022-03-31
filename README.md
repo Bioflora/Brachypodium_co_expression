@@ -2,8 +2,11 @@
 
 
 These scripts are part of the study titled: Patterns of gene co-expression under water-deficit treatments and pan-genome occupancy in Brachypodium distachyon.
+
 Authors: Rubén Sancho 1,2, Pilar Catalán 1,2,3, Bruno Contreras-Moreira 2,4,5, Thomas E. Juenger 6, David L. Des Marais *7
+
 Affiliations:
+
 1 Department of Agricultural and Environmental Sciences, High Polytechnic School of Huesca, University of Zaragoza, Huesca, Spain
 2 Grupo de Bioquímica, Biofísica y Biología Computacional (BIFI, UNIZAR), Unidad Asociada al CSIC, Spain
 3 Tomsk State University, Tomsk, Russia
