@@ -83,7 +83,7 @@ This analysis was compted using Sleuth package. See script 01_Sleuth_script.Rmd
 
 
 
-# Excel files (Supplementary Files)
+# Supplementary Files and others
 
 File S1. Expression of filtered and normalized (by Sleuth package) TPM (transcripts per million) of the 4,941 differentially expressed (DE) isoforms (3,489 DE genes) under the water (W) and drought (D) conditions. The averages TPM per treatment for each isoform and their differences between Drought and Water treatments were computed.
 
