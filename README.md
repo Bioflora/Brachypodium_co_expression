@@ -95,3 +95,5 @@ Transcripts Per Million (TPM) counts files (TPM_counts_Drought_D.csv and TPM_cou
 TPM of Shell genes, D-Drought and W-Water (shell_D_and_W_TPM.xlsx file)
 
 Adjacency matrices (adjacency_matrix_Drought_D.csv and adjacency_matrix_Water_W.csv files) --> See "Releases"
+
+Github repository DOI: https://zenodo.org/badge/latestdoi/388135382
